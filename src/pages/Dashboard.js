@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Container, 
   Typography, 
@@ -10,7 +10,13 @@ import {
   TableRow, 
   Paper, 
   IconButton,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button
 } from '@mui/material';
 import { 
   PowerSettingsNew as PowerIcon, 
@@ -18,6 +24,33 @@ import {
 } from '@mui/icons-material';
 
 function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [selectedPurifier, setSelectedPurifier] = useState(null);
+
+  const handlePowerIconClick = (purifier) => {
+    setSelectedPurifier(purifier);
+    setOpenConfirmModal(true);
+  };
+
+  const handleConfirmStatusChange = () => {
+    if (selectedPurifier) {
+      onToggleStatus(selectedPurifier.id);
+      setOpenConfirmModal(false);
+      setSelectedPurifier(null);
+    }
+  };
+
+  const handleCloseConfirmModal = () => {
+    setOpenConfirmModal(false);
+    setSelectedPurifier(null);
+  };
+
+  // Safely get button color
+  const getButtonColor = (purifier) => {
+    if (!purifier) return 'primary';
+    return purifier.status ? 'error' : 'primary';
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
@@ -52,7 +85,7 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
                 <TableCell>{purifier.lastUpdated}</TableCell>
                 <TableCell align="right">
                   <IconButton 
-                    onClick={() => onToggleStatus(purifier.id)}
+                    onClick={() => handlePowerIconClick(purifier)}
                     color={purifier.status ? 'error' : 'success'}
                   >
                     <PowerIcon />
@@ -69,6 +102,36 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Confirmation Modal */}
+      <Dialog
+        open={openConfirmModal}
+        onClose={handleCloseConfirmModal}
+        aria-labelledby="status-change-dialog-title"
+        aria-describedby="status-change-dialog-description"
+      >
+        <DialogTitle id="status-change-dialog-title">
+          {selectedPurifier && (selectedPurifier.status ? "Deactivate" : "Activate")} Purifier
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="status-change-dialog-description">
+            Are you sure you want to {selectedPurifier && (selectedPurifier.status ? "deactivate" : "activate")} 
+            {" "} the purifier "{selectedPurifier?.name}" (ID: {selectedPurifier?.id})?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirmModal} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmStatusChange} 
+            color={getButtonColor(selectedPurifier)}
+            variant="contained"
+          >
+            {selectedPurifier && (selectedPurifier.status ? "Deactivate" : "Activate")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
