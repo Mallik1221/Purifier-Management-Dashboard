@@ -9,7 +9,9 @@ import {
   FormControlLabel,
   Switch,
   Snackbar,
-  Alert
+  Alert,
+  Checkbox,
+  FormGroup
 } from '@mui/material';
 
 function AddPurifier({ onAddPurifier }) {
@@ -17,7 +19,8 @@ function AddPurifier({ onAddPurifier }) {
     id: '',
     name: '',
     location: '',
-    status: false
+    status: false,
+    manualId: false
   });
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -49,6 +52,14 @@ function AddPurifier({ onAddPurifier }) {
     }));
   };
 
+  const handleManualIdToggle = (e) => {
+    setPurifierData(prev => ({
+      ...prev,
+      manualId: e.target.checked,
+      id: e.target.checked ? '' : `PWR-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -63,8 +74,7 @@ function AddPurifier({ onAddPurifier }) {
       id: purifierData.id,
       name: purifierData.name,
       location: purifierData.location,
-      status: purifierData.status,
-      lastUpdated: new Date().toLocaleString()
+      status: purifierData.status
     };
     
     // Call add purifier function
@@ -79,7 +89,8 @@ function AddPurifier({ onAddPurifier }) {
       id: '',
       name: '',
       location: '',
-      status: false
+      status: false,
+      manualId: purifierData.manualId
     });
   };
 
@@ -118,7 +129,7 @@ function AddPurifier({ onAddPurifier }) {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="User Name"
+                label="Purifier Name"
                 name="name"
                 value={purifierData.name}
                 onChange={handleInputChange}
@@ -168,7 +179,7 @@ function AddPurifier({ onAddPurifier }) {
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert 
           onClose={handleCloseSnackbar} 

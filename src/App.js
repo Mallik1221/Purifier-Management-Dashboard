@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BrowserRouter as Router, 
   Routes, 
@@ -32,35 +32,69 @@ const theme = createTheme({
 });
 
 function App() {
-  const [purifiers, setPurifiers] = useState([
-    { 
-      id: 'PWR-001', 
-      name: 'Office Purifier', 
-      location: 'Main Office', 
-      status: false, 
-      lastUpdated: new Date().toLocaleString() 
-    },
-    { 
-      id: 'PWR-002', 
-      name: 'Warehouse Purifier', 
-      location: 'Storage Facility', 
-      status: true, 
-      lastUpdated: new Date().toLocaleString() 
+  // Function to generate a consistent timestamp
+  const generateTimestamp = () => {
+    const now = new Date();
+    return now.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
+  // Initialize state from localStorage or use default purifiers
+  const [purifiers, setPurifiers] = useState(() => {
+    const savedPurifiers = localStorage.getItem('purifiers');
+    if (savedPurifiers) {
+      return JSON.parse(savedPurifiers);
     }
-  ]);
+    
+    // Default purifiers if no saved data
+    return [
+      { 
+        id: 'PWR-001', 
+        name: 'Office Purifier', 
+        location: 'Main Office', 
+        status: false, 
+        lastUpdated: generateTimestamp()
+      },
+      { 
+        id: 'PWR-002', 
+        name: 'Warehouse Purifier', 
+        location: 'Storage Facility', 
+        status: true, 
+        lastUpdated: generateTimestamp()
+      }
+    ];
+  });
+
+  // Save purifiers to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('purifiers', JSON.stringify(purifiers));
+  }, [purifiers]);
 
   const handleAddPurifier = (newPurifier) => {
+    // Ensure the new purifier has a consistent timestamp
+    const purifierWithTimestamp = {
+      ...newPurifier,
+      lastUpdated: generateTimestamp()
+    };
+
     // Check if a purifier with the same ID already exists
-    const existingPurifierIndex = purifiers.findIndex(p => p.id === newPurifier.id);
+    const existingPurifierIndex = purifiers.findIndex(p => p.id === purifierWithTimestamp.id);
     
     if (existingPurifierIndex !== -1) {
       // If purifier exists, update it
       const updatedPurifiers = [...purifiers];
-      updatedPurifiers[existingPurifierIndex] = newPurifier;
+      updatedPurifiers[existingPurifierIndex] = purifierWithTimestamp;
       setPurifiers(updatedPurifiers);
     } else {
       // If purifier is new, add it to the list
-      setPurifiers([...purifiers, newPurifier]);
+      setPurifiers([...purifiers, purifierWithTimestamp]);
     }
   };
 
@@ -71,7 +105,7 @@ function App() {
           ? { 
               ...purifier, 
               status: !purifier.status,
-              lastUpdated: new Date().toLocaleString()
+              lastUpdated: generateTimestamp()
             }
           : purifier
       )
