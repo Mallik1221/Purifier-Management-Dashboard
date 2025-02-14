@@ -58,17 +58,27 @@ function App() {
       { 
         id: 'PWR-001', 
         name: 'Office Purifier', 
-        location: 'Main Office', 
+        location: {
+          houseNoStreet: '123 Main Street',
+          area: 'Business District',
+          pincode: '400001',
+          phoneNumber: '9876543210'
+        },
         status: false, 
         lastUpdated: generateTimestamp()
       },
       { 
         id: 'PWR-002', 
         name: 'Warehouse Purifier', 
-        location: 'Storage Facility', 
+        location: {
+          houseNoStreet: '456 Industrial Road',
+          area: 'Manufacturing Zone',
+          pincode: '500032',
+          phoneNumber: '9988776655'
+        },
         status: true, 
         lastUpdated: generateTimestamp()
-      }
+      } 
     ];
   });
 
@@ -118,6 +128,19 @@ function App() {
     );
   };
 
+  const handleUpdatePurifier = (updatedPurifier) => {
+    setPurifiers(currentPurifiers => 
+      currentPurifiers.map(purifier => 
+        purifier.id === updatedPurifier.id 
+          ? { 
+              ...updatedPurifier, 
+              lastUpdated: generateTimestamp() 
+            } 
+          : purifier
+      )
+    );
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -131,6 +154,7 @@ function App() {
                 purifiers={purifiers}
                 onToggleStatus={handleTogglePurifierStatus}
                 onRemovePurifier={handleRemovePurifier}
+                onUpdatePurifier={handleUpdatePurifier}
               />
             } 
           />

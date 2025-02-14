@@ -9,18 +9,18 @@ import {
   FormControlLabel,
   Switch,
   Snackbar,
-  Alert,
-  Checkbox,
-  FormGroup
+  Alert
 } from '@mui/material';
 
 function AddPurifier({ onAddPurifier }) {
   const [purifierData, setPurifierData] = useState({
     id: '',
     name: '',
-    location: '',
-    status: false,
-    manualId: false
+    houseNoStreet: '',
+    area: '',
+    pincode: '',
+    phoneNumber: '',
+    status: false
   });
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -29,13 +29,20 @@ function AddPurifier({ onAddPurifier }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // Ensure ID follows PWR-XXX format
-    if (name === 'id') {
-      // Remove any non-numeric characters and limit to 3 digits
-      const numericValue = value.replace(/\D/g, '').slice(0, 3);
+    // Special handling for specific fields
+    if (name === 'pincode') {
+      // Only allow numeric input for pincode
+      const numericValue = value.replace(/\D/g, '').slice(0, 6);
       setPurifierData(prev => ({
         ...prev,
-        [name]: numericValue ? `PWR-${numericValue}` : ''
+        [name]: numericValue
+      }));
+    } else if (name === 'phoneNumber') {
+      // Only allow numeric input for phone number, limit to 10 digits
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setPurifierData(prev => ({
+        ...prev,
+        [name]: numericValue
       }));
     } else {
       setPurifierData(prev => ({
@@ -52,20 +59,22 @@ function AddPurifier({ onAddPurifier }) {
     }));
   };
 
-  const handleManualIdToggle = (e) => {
-    setPurifierData(prev => ({
-      ...prev,
-      manualId: e.target.checked,
-      id: e.target.checked ? '' : `PWR-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
-    }));
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validate ID format
-    if (!purifierData.id || !purifierData.id.match(/^PWR-\d{3}$/)) {
-      alert('Please enter a valid Purifier ID (PWR-XXX format)');
+    // Validate required fields
+    if (!purifierData.id.trim()) {
+      alert('Please enter a Purifier ID');
+      return;
+    }
+
+    if (purifierData.pincode && purifierData.pincode.length !== 6) {
+      alert('Pincode must be 6 digits');
+      return;
+    }
+
+    if (purifierData.phoneNumber && purifierData.phoneNumber.length !== 10) {
+      alert('Phone number must be 10 digits');
       return;
     }
 
@@ -73,7 +82,12 @@ function AddPurifier({ onAddPurifier }) {
     const newPurifier = {
       id: purifierData.id,
       name: purifierData.name,
-      location: purifierData.location,
+      location: {
+        houseNoStreet: purifierData.houseNoStreet,
+        area: purifierData.area,
+        pincode: purifierData.pincode,
+        phoneNumber: purifierData.phoneNumber
+      },
       status: purifierData.status
     };
     
@@ -88,9 +102,11 @@ function AddPurifier({ onAddPurifier }) {
     setPurifierData({
       id: '',
       name: '',
-      location: '',
-      status: false,
-      manualId: purifierData.manualId
+      houseNoStreet: '',
+      area: '',
+      pincode: '',
+      phoneNumber: '',
+      status: false
     });
   };
 
@@ -118,18 +134,14 @@ function AddPurifier({ onAddPurifier }) {
                 onChange={handleInputChange}
                 required
                 variant="outlined"
-                placeholder="Enter ID (e.g., PWR-001)"
-                helperText="Format: PWR-XXX (3 digit number)"
-                InputProps={{
-                  startAdornment: purifierData.id.startsWith('PWR-') ? null : 'PWR-'
-                }}
+                placeholder="Enter Purifier ID"
               />
             </Grid>
 
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Purifier Name"
+                label="Customer Name"
                 name="name"
                 value={purifierData.name}
                 onChange={handleInputChange}
@@ -140,11 +152,66 @@ function AddPurifier({ onAddPurifier }) {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Location"
-                name="location"
-                value={purifierData.location}
+                label="House No. / Street"
+                name="houseNoStreet"
+                value={purifierData.houseNoStreet}
                 onChange={handleInputChange}
                 required
+                placeholder="Enter House Number and Street"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Area"
+                name="area"
+                value={purifierData.area}
+                onChange={handleInputChange}
+                required
+                placeholder="Enter Area/Locality"
+              />
+            </Grid>
+
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Pincode"
+                name="pincode"
+                value={purifierData.pincode}
+                onChange={handleInputChange}
+                required
+                placeholder="6-digit Pincode"
+                inputProps={{
+                  maxLength: 6,
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*'
+                }}
+                helperText={purifierData.pincode.length > 0 && purifierData.pincode.length !== 6 
+                  ? 'Pincode must be 6 digits' 
+                  : ''}
+                error={purifierData.pincode.length > 0 && purifierData.pincode.length !== 6}
+              />
+            </Grid>
+
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Phone Number"
+                name="phoneNumber"
+                value={purifierData.phoneNumber}
+                onChange={handleInputChange}
+                required
+                placeholder="10-digit Mobile Number"
+                inputProps={{
+                  maxLength: 10,
+                  inputMode: 'tel',
+                  pattern: '[0-9]*'
+                }}
+                helperText={purifierData.phoneNumber.length > 0 && purifierData.phoneNumber.length !== 10 
+                  ? 'Phone number must be 10 digits' 
+                  : ''}
+                error={purifierData.phoneNumber.length > 0 && purifierData.phoneNumber.length !== 10}
               />
             </Grid>
 

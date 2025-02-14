@@ -23,17 +23,23 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Box
+  Box,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import { 
   PowerSettingsNew as PowerIcon, 
   Delete as DeleteIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Phone as PhoneIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 
-function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
+function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifier}) {
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedPurifier, setSelectedPurifier] = useState(null);
+  const [editedPurifier, setEditedPurifier] = useState(null);
   
   // Search and Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,7 +49,7 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
 
   // Get unique locations for filter dropdown
   const uniqueLocations = useMemo(() => {
-    return [...new Set(purifiers.map(p => p.location))];
+    return [...new Set(purifiers.map(p => p.location.area))];
   }, [purifiers]);
 
   // Filtered and Searched Purifiers
@@ -54,7 +60,10 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
         searchTerm === '' || 
         purifier.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         purifier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        purifier.location.toLowerCase().includes(searchTerm.toLowerCase());
+        purifier.location.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        purifier.location.houseNoStreet.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        purifier.location.pincode.includes(searchTerm) ||
+        purifier.location.phoneNumber.includes(searchTerm);
 
       // Status filter
       const matchesStatus = 
@@ -65,7 +74,7 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
       // Location filter
       const matchesLocation = 
         filterLocation === '' || 
-        purifier.location === filterLocation;
+        purifier.location.area === filterLocation;
 
       // Date filter - parse the lastUpdated string to a Date object
       const matchesDate = 
@@ -80,6 +89,85 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
   const handlePowerIconClick = (purifier) => {
     setSelectedPurifier(purifier);
     setOpenConfirmModal(true);
+  };
+
+  const handleEditIconClick = (purifier) => {
+    setSelectedPurifier(purifier);
+    setEditedPurifier({ ...purifier });
+    setOpenEditModal(true);
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Special handling for specific fields
+    if (name === 'pincode') {
+      // Only allow numeric input for pincode
+      const numericValue = value.replace(/\D/g, '').slice(0, 6);
+      setEditedPurifier(prev => ({
+        ...prev,
+        location: {
+          ...prev.location,
+          [name]: numericValue
+        }
+      }));
+    } else if (name === 'phoneNumber') {
+      // Only allow numeric input for phone number, limit to 10 digits
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setEditedPurifier(prev => ({
+        ...prev,
+        location: {
+          ...prev.location,
+          [name]: numericValue
+        }
+      }));
+    } else if (name === 'name' || name === 'id') {
+      setEditedPurifier(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } else {
+      setEditedPurifier(prev => ({
+        ...prev,
+        location: {
+          ...prev.location,
+          [name]: value
+        }
+      }));
+    }
+  };
+
+  const handleEditStatusToggle = () => {
+    setEditedPurifier(prev => ({
+      ...prev,
+      status: !prev.status
+    }));
+  };
+
+  const handleUpdatePurifier = () => {
+    // Validate inputs
+    if (!editedPurifier.id.trim()) {
+      alert('Purifier ID cannot be empty');
+      return;
+    }
+
+    if (editedPurifier.location.pincode && editedPurifier.location.pincode.length !== 6) {
+      alert('Pincode must be 6 digits');
+      return;
+    }
+
+    if (editedPurifier.location.phoneNumber && editedPurifier.location.phoneNumber.length !== 10) {
+      alert('Phone number must be 10 digits');
+      return;
+    }
+
+    // Call update purifier function
+    onUpdatePurifier(editedPurifier);
+    
+    // Close modal
+    setOpenEditModal(false);
+    setSelectedPurifier(null);
+    setEditedPurifier(null);
   };
 
   const handleConfirmStatusChange = () => {
@@ -192,7 +280,8 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
             <TableRow>
               <TableCell>Purifier ID</TableCell>
               <TableCell>Name</TableCell>
-              <TableCell>Location</TableCell>
+              <TableCell>Address</TableCell>
+              <TableCell>Contact</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Last Updated</TableCell>
               <TableCell align="right">Actions</TableCell>
@@ -203,7 +292,17 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
               <TableRow key={purifier.id}>
                 <TableCell>{purifier.id}</TableCell>
                 <TableCell>{purifier.name}</TableCell>
-                <TableCell>{purifier.location}</TableCell>
+                <TableCell>
+                  {purifier.location.houseNoStreet}, 
+                  {purifier.location.area}, 
+                  {purifier.location.pincode}
+                </TableCell>
+                <TableCell>
+                  <Box display="flex" alignItems="center">
+                    <PhoneIcon fontSize="small" sx={{ mr: 1 }} />
+                    {purifier.location.phoneNumber}
+                  </Box>
+                </TableCell>
                 <TableCell>
                   <Chip 
                     label={purifier.status ? 'Active' : 'Inactive'}
@@ -220,9 +319,15 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
                     <PowerIcon />
                   </IconButton>
                   <IconButton 
-                    onClick={() => onRemovePurifier(purifier.id)}
-                    color="error"
-                  >
+                onClick={() => handleEditIconClick(purifier)}
+                color="primary"
+              >
+                <EditIcon />
+              </IconButton>
+              <IconButton 
+                onClick={() => onRemovePurifier(purifier.id)}
+                color="error"
+              >
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
@@ -258,6 +363,117 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier }) {
             variant="contained"
           >
             {selectedPurifier && (selectedPurifier.status ? "Deactivate" : "Activate")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Edit Purifier Details</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={3} sx={{ pt: 2 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Purifier ID"
+                name="id"
+                value={editedPurifier?.id || ''}
+                onChange={handleEditInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Customer Name"
+                name="name"
+                value={editedPurifier?.name || ''}
+                onChange={handleEditInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="House No. / Street"
+                name="houseNoStreet"
+                value={editedPurifier?.location?.houseNoStreet || ''}
+                onChange={handleEditInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Area"
+                name="area"
+                value={editedPurifier?.location?.area || ''}
+                onChange={handleEditInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Pincode"
+                name="pincode"
+                value={editedPurifier?.location?.pincode || ''}
+                onChange={handleEditInputChange}
+                required
+                inputProps={{
+                  maxLength: 6,
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*'
+                }}
+                error={editedPurifier?.location?.pincode && editedPurifier.location.pincode.length !== 6}
+                helperText={editedPurifier?.location?.pincode && editedPurifier.location.pincode.length !== 6 
+                  ? 'Pincode must be 6 digits' 
+                  : ''}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Phone Number"
+                name="phoneNumber"
+                value={editedPurifier?.location?.phoneNumber || ''}
+                onChange={handleEditInputChange}
+                required
+                inputProps={{
+                  maxLength: 10,
+                  inputMode: 'tel',
+                  pattern: '[0-9]*'
+                }}
+                error={editedPurifier?.location?.phoneNumber && editedPurifier.location.phoneNumber.length !== 10}
+                helperText={editedPurifier?.location?.phoneNumber && editedPurifier.location.phoneNumber.length !== 10 
+                  ? 'Phone number must be 10 digits' 
+                  : ''}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={editedPurifier?.status || false}
+                    onChange={handleEditStatusToggle}
+                    color="primary"
+                  />
+                }
+                label={`Status: ${editedPurifier?.status ? 'Active' : 'Inactive'}`}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditModal(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleUpdatePurifier} color="primary" variant="contained">
+            Update Purifier
           </Button>
         </DialogActions>
       </Dialog>
