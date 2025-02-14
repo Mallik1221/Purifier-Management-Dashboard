@@ -52,11 +52,11 @@ function App() {
     // If no saved purifiers, return the default purifiers
     return savedPurifiers ? JSON.parse(savedPurifiers) : [
       {
-        id: 'PWR-001',
-        name: 'John Doe',
+        id: '412753',
+        name: 'Prem',
         location: {
           houseNoStreet: '123 Main St',
-          area: 'Downtown',
+          area: 'Vizag',
           pincode: '560001',
           phoneNumber: '9876543210'
         },
@@ -65,10 +65,10 @@ function App() {
       },
       {
         id: 'PWR-002',
-        name: 'Jane Smith',
+        name: 'Jaya',
         location: {
-          houseNoStreet: '456 Elm St',
-          area: 'Suburb',
+          houseNoStreet: '456 Elm Street',
+          area: 'pendurthi',
           pincode: '560002',
           phoneNumber: '8765432109'
         },
