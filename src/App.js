@@ -65,7 +65,7 @@ function App() {
       },
       {
         id: 'PWR-002',
-        name: 'Jaya',
+        name: 'Mallik',
         location: {
           houseNoStreet: '456 Elm Street',
           area: 'pendurthi',
