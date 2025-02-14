@@ -49,40 +49,36 @@ function App() {
   // Initialize state from localStorage or use default purifiers
   const [purifiers, setPurifiers] = useState(() => {
     const savedPurifiers = localStorage.getItem('purifiers');
-    if (savedPurifiers) {
-      return JSON.parse(savedPurifiers);
-    }
-    
-    // Default purifiers if no saved data
-    return [
-      { 
-        id: 'PWR-001', 
-        name: 'Office Purifier', 
+    // If no saved purifiers, return the default purifiers
+    return savedPurifiers ? JSON.parse(savedPurifiers) : [
+      {
+        id: 'PWR-001',
+        name: 'John Doe',
         location: {
-          houseNoStreet: '123 Main Street',
-          area: 'Business District',
-          pincode: '400001',
+          houseNoStreet: '123 Main St',
+          area: 'Downtown',
+          pincode: '560001',
           phoneNumber: '9876543210'
-        },
-        status: false, 
-        lastUpdated: generateTimestamp()
-      },
-      { 
-        id: 'PWR-002', 
-        name: 'Warehouse Purifier', 
-        location: {
-          houseNoStreet: '456 Industrial Road',
-          area: 'Manufacturing Zone',
-          pincode: '500032',
-          phoneNumber: '9988776655'
         },
         status: true, 
         lastUpdated: generateTimestamp()
-      } 
+      },
+      {
+        id: 'PWR-002',
+        name: 'Jane Smith',
+        location: {
+          houseNoStreet: '456 Elm St',
+          area: 'Suburb',
+          pincode: '560002',
+          phoneNumber: '8765432109'
+        },
+        status: false, 
+        lastUpdated: generateTimestamp()
+      }
     ];
   });
-
-  // Save purifiers to localStorage whenever they change
+  
+  // Ensure localStorage is updated with default purifiers if empty
   useEffect(() => {
     localStorage.setItem('purifiers', JSON.stringify(purifiers));
   }, [purifiers]);
