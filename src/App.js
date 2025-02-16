@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   BrowserRouter as Router, 
   Routes, 
@@ -14,6 +15,9 @@ import {
 import Dashboard from './pages/Dashboard';
 import AddPurifier from './components/AddPurifier';
 import Header from './components/Header';
+
+// API Configuration
+const API_URL = 'http://localhost:5000/api/purifiers';
 
 // Create a custom theme
 const theme = createTheme({
@@ -46,95 +50,145 @@ function App() {
     });
   };
 
-  // Initialize state from localStorage or use default purifiers
-  const [purifiers, setPurifiers] = useState(() => {
-    const savedPurifiers = localStorage.getItem('purifiers');
-    // If no saved purifiers, return the default purifiers
-    return savedPurifiers ? JSON.parse(savedPurifiers) : [
-      {
-        id: '412753',
-        name: 'Prem',
-        location: {
-          houseNoStreet: '123 Main St',
-          area: 'Vizag',
-          pincode: '560001',
-          phoneNumber: '9876543210'
-        },
-        status: true, 
-        lastUpdated: generateTimestamp()
-      },
-      {
-        id: 'PWR-002',
-        name: 'Mallik',
-        location: {
-          houseNoStreet: '456 Elm Street',
-          area: 'pendurthi',
-          pincode: '560002',
-          phoneNumber: '8765432109'
-        },
-        status: false, 
-        lastUpdated: generateTimestamp()
-      }
-    ];
-  });
-  
-  // Ensure localStorage is updated with default purifiers if empty
-  useEffect(() => {
-    localStorage.setItem('purifiers', JSON.stringify(purifiers));
-  }, [purifiers]);
+  // State for purifiers
+  const [purifiers, setPurifiers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleAddPurifier = (newPurifier) => {
-    // Ensure the new purifier has a consistent timestamp
-    const purifierWithTimestamp = {
-      ...newPurifier,
-      lastUpdated: generateTimestamp()
+  // Fetch purifiers on component mount
+  useEffect(() => {
+    const fetchPurifiers = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(API_URL);
+        setPurifiers(response.data);
+        localStorage.setItem('purifiers', JSON.stringify(response.data));
+        setIsLoading(false);
+      } catch (err) {
+        // Fallback to localStorage
+        const savedPurifiers = localStorage.getItem('purifiers');
+        if (savedPurifiers) {
+          setPurifiers(JSON.parse(savedPurifiers));
+        } else {
+          // Default purifiers if no data available
+          const defaultPurifiers = [
+            {
+              id: '412752',
+              name: 'Prem',
+              location: {
+                houseNoStreet: '123 Main St',
+                area: 'Vizag',
+                pincode: '560001',
+                phoneNumber: '9876543210'
+              },
+              status: true, 
+              lastUpdated: generateTimestamp()
+            },
+            {
+              id: 'PWR-002',
+              name: 'Mallik',
+              location: {
+                houseNoStreet: '456 Elm Street',
+                area: 'pendurthi',
+                pincode: '560002',
+                phoneNumber: '8765432109'
+              },
+              status: false, 
+              lastUpdated: generateTimestamp()
+            }
+          ];
+          setPurifiers(defaultPurifiers);
+        }
+        setError(err.message);
+        setIsLoading(false);
+      }
     };
 
-    // Check if a purifier with the same ID already exists
-    const existingPurifierIndex = purifiers.findIndex(p => p.id === purifierWithTimestamp.id);
-    
-    if (existingPurifierIndex !== -1) {
-      // If purifier exists, update it
-      const updatedPurifiers = [...purifiers];
-      updatedPurifiers[existingPurifierIndex] = purifierWithTimestamp;
-      setPurifiers(updatedPurifiers);
-    } else {
-      // If purifier is new, add it to the list
-      setPurifiers([...purifiers, purifierWithTimestamp]);
+    fetchPurifiers();
+  }, []);
+
+  // Add Purifier Handler
+  const handleAddPurifier = async (newPurifier) => {
+    try {
+      // Add timestamp to the new purifier
+      const purifierWithTimestamp = {
+        ...newPurifier,
+        lastUpdated: generateTimestamp()
+      };
+
+      // Send to backend
+      const response = await axios.post(API_URL, purifierWithTimestamp);
+      
+      // Update local state
+      setPurifiers(prevPurifiers => {
+        // Check if purifier already exists
+        const existingIndex = prevPurifiers.findIndex(p => p.id === response.data.id);
+        
+        if (existingIndex !== -1) {
+          // Update existing purifier
+          const updatedPurifiers = [...prevPurifiers];
+          updatedPurifiers[existingIndex] = response.data;
+          return updatedPurifiers;
+        } else {
+          // Add new purifier
+          return [...prevPurifiers, response.data];
+        }
+      });
+    } catch (err) {
+      console.error('Error adding purifier:', err);
+      // Optionally handle error (show notification, etc.)
     }
   };
 
-  const handleTogglePurifierStatus = (id) => {
-    setPurifiers(currentPurifiers => 
-      currentPurifiers.map(purifier => 
-        purifier.id === id 
-          ? { 
-              ...purifier, 
-              status: !purifier.status,
-              lastUpdated: generateTimestamp()
-            }
-          : purifier
-      )
-    );
+  // Toggle Purifier Status Handler
+  const handleTogglePurifierStatus = async (id) => {
+    try {
+      const response = await axios.patch(`${API_URL}/${id}/toggle-status`);
+      
+      setPurifiers(currentPurifiers => 
+        currentPurifiers.map(purifier => 
+          purifier.id === id ? response.data : purifier
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling purifier status:', err);
+    }
   };
 
-  const handleRemovePurifier = (id) => {
-    setPurifiers(currentPurifiers => 
-      currentPurifiers.filter(purifier => purifier.id !== id)
-    );
+  // Remove Purifier Handler
+  const handleRemovePurifier = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      
+      setPurifiers(currentPurifiers => 
+        currentPurifiers.filter(purifier => purifier.id !== id)
+      );
+    } catch (err) {
+      console.error('Error removing purifier:', err);
+    }
   };
 
-  const handleUpdatePurifier = (updatedPurifier) => {
-    setPurifiers(currentPurifiers => 
-      currentPurifiers.map(purifier => 
-        purifier.id === updatedPurifier.id 
-          ? { 
-              ...updatedPurifier, 
-              lastUpdated: generateTimestamp() 
-            } 
-          : purifier
-      )
-    );
+  // Update Purifier Handler
+  const handleUpdatePurifier = async (updatedPurifier) => {
+    try {
+      // Add timestamp to the updated purifier
+      const purifierWithTimestamp = {
+        ...updatedPurifier,
+        lastUpdated: generateTimestamp()
+      };
+
+      // Send update to backend
+      const response = await axios.put(`${API_URL}/${updatedPurifier.id}`, purifierWithTimestamp);
+      
+      // Update local state
+      setPurifiers(currentPurifiers => 
+        currentPurifiers.map(purifier => 
+          purifier.id === updatedPurifier.id ? response.data : purifier
+        )
+      );
+    } catch (err) {
+      console.error('Error updating purifier:', err);
+    }
   };
 
   return (
@@ -151,6 +205,8 @@ function App() {
                 onToggleStatus={handleTogglePurifierStatus}
                 onRemovePurifier={handleRemovePurifier}
                 onUpdatePurifier={handleUpdatePurifier}
+                isLoading={isLoading}
+                error={error}
               />
             } 
           />
