@@ -33,7 +33,7 @@ function AddPurifier({ onAddPurifier }) {
     area: '',
     pincode: '',
     phoneNumber: '',
-    status: false
+    onlineStatus: false
   });
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -101,7 +101,7 @@ function AddPurifier({ onAddPurifier }) {
         pincode: purifierData.pincode,
         phoneNumber: purifierData.phoneNumber
       },
-      status: purifierData.status
+      onlineStatus: purifierData.onlineStatus
     };
     
     // Call add purifier function
@@ -119,7 +119,7 @@ function AddPurifier({ onAddPurifier }) {
       area: '',
       pincode: '',
       phoneNumber: '',
-      status: false
+      onlineStatus: false
     });
   };
 
@@ -228,20 +228,21 @@ function AddPurifier({ onAddPurifier }) {
                 error={purifierData.phoneNumber.length > 0 && purifierData.phoneNumber.length !== 10}
               />
             </Grid>
-
             <Grid item xs={12}>
               <FormControlLabel
                 control={
                   <Switch
-                    checked={purifierData.status}
-                    onChange={handleStatusToggle}
+                    checked={purifierData.onlineStatus}
+                    onChange={(e) => setPurifierData(prev => ({ ...prev, onlineStatus: e.target.checked }))}
+                    // onChange={handleStatusToggle}
+                    name="Online Status"
                     color="primary"
                   />
                 }
-                label={`Initial Status: ${purifierData.status ? 'Active' : 'Inactive'}`}
+                label={`Online Status: ${purifierData.onlineStatus ? 'Active' : 'Inactive'}`}
               />
             </Grid>
-
+            
             <Grid item xs={12}>
               <Button 
                 type="submit" 
@@ -260,7 +261,7 @@ function AddPurifier({ onAddPurifier }) {
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert 
           onClose={handleCloseSnackbar} 
