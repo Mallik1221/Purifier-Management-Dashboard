@@ -34,6 +34,8 @@ import {
   Phone as PhoneIcon,
   Edit as EditIcon
 } from '@mui/icons-material';
+import { format } from 'date-fns';
+
 
 function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifier}) {
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -52,6 +54,12 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
     return [...new Set(purifiers.map(p => p.location.area))];
   }, [purifiers]);
 
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'N/A';
+  
+    return format(new Date(dateString), 'dd-MM-yyyy HH:mm:ss');
+  };
+  
   // Filtered and Searched Purifiers
   const filteredPurifiers = useMemo(() => {
     return purifiers.filter(purifier => {
@@ -66,10 +74,27 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
         purifier.location.phoneNumber.includes(searchTerm);
 
       // Status filter
-      const matchesStatus = 
-        filterStatus === 'all' || 
-        (filterStatus === 'active' && purifier.status) || 
-        (filterStatus === 'inactive' && !purifier.status);
+      let matchesStatus = false;
+    switch (filterStatus) {
+      case 'all':
+        matchesStatus = true;
+        break;
+      case 'active':
+        matchesStatus = purifier.onlineStatus === true;
+        break;
+      case 'inactive':
+        matchesStatus = purifier.onlineStatus === false;
+        break;
+      case 'online':
+        matchesStatus = purifier.status === true;
+        break;
+      case 'offline':
+        matchesStatus = purifier.status === false;
+        break;
+      default:
+        matchesStatus = true; // fallback if needed
+        break;
+    }
 
       // Location filter
       const matchesLocation = 
@@ -90,6 +115,8 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
     setSelectedPurifier(purifier);
     setOpenConfirmModal(true);
   };
+
+  
 
   const handleEditIconClick = (purifier) => {
     setSelectedPurifier(purifier);
@@ -218,9 +245,11 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
                 onChange={(e) => setFilterStatus(e.target.value)}
                 label="Status"
               >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="active">Active (onlineStatus = true)</MenuItem>
+                <MenuItem value="inactive">Inactive (onlineStatus = false)</MenuItem>
+                <MenuItem value="online">Online (deviceStatus = true)</MenuItem>
+                <MenuItem value="offline">Offline (deviceStatus = false)</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -281,8 +310,9 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
               <TableCell>Purifier ID</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Address</TableCell>
+              <TableCell>Online Status</TableCell>
               <TableCell>Contact</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>Device Status</TableCell>
               <TableCell>Last Updated</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -298,6 +328,14 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
                   {purifier.location.pincode}
                 </TableCell>
                 <TableCell>
+                  <Chip 
+                    label={purifier.onlineStatus ? 'Active' : 'Inactive'}
+                    color={purifier.onlineStatus ? 'success' : 'error'}
+                    size="small"
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell>
                   <Box display="flex" alignItems="center">
                     <PhoneIcon fontSize="small" sx={{ mr: 1 }} />
                     {purifier.location.phoneNumber}
@@ -305,16 +343,16 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
                 </TableCell>
                 <TableCell>
                   <Chip 
-                    label={purifier.status ? 'Active' : 'Inactive'}
+                    label={purifier.status ? 'Online' : 'Offline'}
                     color={purifier.status ? 'success' : 'error'}
                     size="small"
                   />
                 </TableCell>
-                <TableCell>{purifier.lastUpdated}</TableCell>
+                <TableCell>{formatDateTime(purifier.lastUpdated)}</TableCell>
                 <TableCell align="right">
                   <IconButton 
                     onClick={() => handlePowerIconClick(purifier)}
-                    color={purifier.status ? 'error' : 'success'}
+                    color={purifier.onlineStatus   ? 'error' : 'success'}
                   >
                     <PowerIcon />
                   </IconButton>
@@ -345,11 +383,11 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
         aria-describedby="status-change-dialog-description"
       >
         <DialogTitle id="status-change-dialog-title">
-          {selectedPurifier && (selectedPurifier.status ? "Deactivate" : "Activate")} Purifier
+          {selectedPurifier && (selectedPurifier.onlineStatus ? "Deactivate" : "Activate")} Purifier
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="status-change-dialog-description">
-            Are you sure you want to {selectedPurifier && (selectedPurifier.status ? "deactivate" : "activate")} 
+            Are you sure you want to {selectedPurifier && (selectedPurifier.onlineStatus ? "deactivate" : "activate")} 
             {" "} the purifier "{selectedPurifier?.name}" (ID: {selectedPurifier?.id})?
           </DialogContentText>
         </DialogContent>
@@ -362,7 +400,7 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
             color={getButtonColor(selectedPurifier)}
             variant="contained"
           >
-            {selectedPurifier && (selectedPurifier.status ? "Deactivate" : "Activate")}
+            {selectedPurifier && (selectedPurifier.onlineStatus ? "Deactivate" : "Activate")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -458,12 +496,17 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
               <FormControlLabel
                 control={
                   <Switch
-                    checked={editedPurifier?.status || false}
-                    onChange={handleEditStatusToggle}
+                    checked={editedPurifier?.onlineStatus || false}
+                    onChange={() =>
+                             setEditedPurifier(prev => ({
+                               ...prev,
+                               onlineStatus: !prev.onlineStatus
+                             }))
+                           }
                     color="primary"
                   />
                 }
-                label={`Status: ${editedPurifier?.status ? 'Active' : 'Inactive'}`}
+                label={`Online Status: ${editedPurifier?.onlineStatus ? 'Active' : 'Inactive'}`}
               />
             </Grid>
           </Grid>

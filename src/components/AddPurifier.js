@@ -65,12 +65,12 @@ function AddPurifier({ onAddPurifier }) {
     }
   };
 
-  const handleStatusToggle = (e) => {
-    setPurifierData(prev => ({
-      ...prev,
-      status: e.target.checked
-    }));
-  };
+  // const handleStatusToggle = (e) => {
+  //   setPurifierData(prev => ({
+  //     ...prev,
+  //     status: e.target.checked
+  //   }));
+  // };
 
   const handleSubmit = (e) => {
     e.preventDefault();
