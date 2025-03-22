@@ -12,9 +12,22 @@ import {
   Alert
 } from '@mui/material';
 
+// Add this function to generate a unique 5-digit ID
+// Define existingIds array to track generated IDs
+const existingIds = []; // Replace with actual IDs if available
+
+// Add this function to generate a unique 5-digit ID
+const generateUniqueId = () => {
+  let id;
+  do {
+    id = Math.floor(10000 + Math.random() * 90000).toString(); // Generates a 5-digit number
+  } while (existingIds.includes(id)); // Check against existing IDs to ensure uniqueness
+  return id;
+};
+
 function AddPurifier({ onAddPurifier }) {
   const [purifierData, setPurifierData] = useState({
-    id: '',
+    id: generateUniqueId(),
     name: '',
     houseNoStreet: '',
     area: '',
@@ -131,10 +144,11 @@ function AddPurifier({ onAddPurifier }) {
                 label="Purifier ID"
                 name="id"
                 value={purifierData.id}
-                onChange={handleInputChange}
+                InputProps={{
+                  readOnly: true, // Makes the field read-only
+                }}
                 required
                 variant="outlined"
-                placeholder="Enter Purifier ID"
               />
             </Grid>
 
