@@ -310,7 +310,7 @@ function Dashboard({ purifiers, onToggleStatus, onRemovePurifier,onUpdatePurifie
               <TableCell>Purifier ID</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Address</TableCell>
-              <TableCell>Online Status</TableCell>
+              <TableCell>Switch</TableCell>
               <TableCell>Contact</TableCell>
               <TableCell>Device Status</TableCell>
               <TableCell>Last Updated</TableCell>
