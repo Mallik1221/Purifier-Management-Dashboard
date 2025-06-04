@@ -106,8 +106,8 @@ function App() {
     };
 
     fetchPurifiers();
-    const intervalId = setInterval(fetchPurifiers, 1000); // poll every 1 second
-    return () => clearInterval(intervalId);
+    // const intervalId = setInterval(fetchPurifiers, 1000); // poll every 1 second
+    // return () => clearInterval(intervalId);
   }, []);
 
   // Add Purifier Handler
