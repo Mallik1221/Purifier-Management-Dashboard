@@ -17,9 +17,8 @@ import AddPurifier from './components/AddPurifier';
 import Header from './components/Header';
 
 // API Configuration
-// const API_URL = 'https://purifier-management-backend.onrender.com/api/purifiers';
-const API_URL = 'http://62.72.56.225:5000/api/purifiers';
-// const API_URL='http://localhost:5000/api/purifiers';
+const API_URL = 'http://localhost:5000/api/purifiers';
+// const API_URL = 'https://purifier-management-backend.onrender.com/api/purifiers'; 
 
 // Create a custom theme
 const theme = createTheme({
@@ -107,8 +106,6 @@ function App() {
     };
 
     fetchPurifiers();
-    const intervalId = setInterval(fetchPurifiers, 1000); // poll every 1 second
-    return () => clearInterval(intervalId);
   }, []);
 
   // Add Purifier Handler
